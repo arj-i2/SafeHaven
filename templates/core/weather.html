@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Weather Monitoring | SafeHaven</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #F4F0EC;
+            color: #302522;
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            background: #211C1B;
+        }
+
+        .navbar-brand span {
+            color: #F36B32;
+        }
+
+        .nav-link-custom {
+            color: #F4F0EC;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        .nav-link-custom:hover {
+            color: #F36B32;
+        }
+
+        .page-title {
+            color: #211C1B;
+            font-weight: 700;
+        }
+
+        .weather-card {
+            background: white;
+            border: 1px solid #E9DFD8;
+            border-radius: 14px;
+        }
+
+        .btn-lava {
+            background: #C43D24;
+            color: white;
+            border: none;
+        }
+
+        .btn-lava:hover {
+            background: #9F2F1D;
+            color: white;
+        }
+
+        .search-input {
+            border: 1px solid #D9CCC4;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .search-input:focus {
+            border-color: #F36B32;
+            box-shadow: 0 0 0 3px rgba(243, 107, 50, 0.15);
+        }
+
+        .weather-icon {
+            width: 110px;
+            height: 110px;
+        }
+
+        .temperature {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #C43D24;
+            line-height: 1.2;
+        }
+
+        .weather-detail {
+            background: #F9F5F1;
+            border: 1px solid #E9DFD8;
+            border-radius: 10px;
+            padding: 20px;
+            height: 100%;
+        }
+
+        .weather-detail small {
+            color: #81736D;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .weather-detail p {
+            margin-bottom: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #302522;
+        }
+
+        .weather-location {
+            color: #211C1B;
+        }
+
+        .weather-description {
+            color: #81736D;
+            text-transform: capitalize;
+        }
+
+        .weather-divider {
+            border-color: #E9DFD8;
+            margin: 25px 0;
+        }
+
+        @media (max-width: 576px) {
+            .temperature {
+                font-size: 3rem;
+            }
+
+            .weather-card .card-body {
+                padding: 20px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a href="{% url 'home' %}" class="navbar-brand fw-bold">
+            Safe<span>Haven</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNav">
+            <div class="navbar-nav ms-auto align-items-lg-center">
+                <a href="{% url 'home' %}" class="nav-link-custom py-2">Home</a>
+                <a href="{% url 'dashboard' %}" class="nav-link-custom py-2">Dashboard</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-5">
+
+    <div class="mb-4">
+        <h2 class="page-title mb-1">Weather Monitoring</h2>
+        <p class="text-secondary">
+            Current weather information powered by
+            <a href="https://openweathermap.org/" target="_blank" rel="noopener noreferrer">
+                OpenWeatherMap
+            </a>.
+        </p>
+    </div>
+
+    <div class="card shadow-sm weather-card mb-4">
+        <div class="card-body p-4">
+
+            <h5 class="fw-bold mb-3">Search Weather by City</h5>
+
+            <form method="GET" class="row g-3">
+                <div class="col-md-9">
+                    <input
+                        type="text"
+                        name="city"
+                        class="form-control search-input"
+                        placeholder="Enter city name (e.g. Manila)"
+                        value="{{ search_city }}"
+                        required
+                    >
+                </div>
+
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-lava w-100 py-2">
+                        Search Weather
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    {% if message %}
+    <div class="alert alert-info text-center shadow-sm">
+        {{ message }}
+    </div>
+    {% endif %}
+
+    {% if error_message %}
+    <div class="alert alert-danger shadow-sm">
+        {{ error_message }}
+    </div>
+    {% endif %}
+
+    {% if weather_data %}
+    <div class="card shadow-sm weather-card">
+
+        <div class="card-body p-4 p-md-5">
+
+            <div class="text-center mb-4">
+
+                <h3 class="weather-location fw-bold">
+                    {{ weather_data.city }}, {{ weather_data.country }}
+                </h3>
+
+                <img
+                    src="https://openweathermap.org/img/wn/{{ weather_data.current.icon }}@2x.png"
+                    alt="{{ weather_data.current.description }}"
+                    class="weather-icon"
+                >
+
+                <div class="temperature">
+                    {{ weather_data.current.temperature }}°C
+                </div>
+
+                <h5 class="weather-description fw-semibold mt-2">
+                    {{ weather_data.current.description }}
+                </h5>
+
+                <p class="text-secondary mb-0">
+                    Current weather conditions
+                </p>
+
+            </div>
+
+            <hr class="weather-divider">
+
+            <h5 class="fw-bold mb-3">Weather Details</h5>
+
+            <div class="row g-3">
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="weather-detail">
+                        <small>Feels Like</small>
+                        <p>{{ weather_data.current.feels_like }}°C</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="weather-detail">
+                        <small>Humidity</small>
+                        <p>{{ weather_data.current.humidity }}%</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="weather-detail">
+                        <small>Wind Speed</small>
+                        <p>{{ weather_data.current.wind_speed }} km/h</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="weather-detail">
+                        <small>Precipitation (Last Hour)</small>
+                        <p>{{ weather_data.current.precipitation }} mm</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="weather-detail">
+                        <small>Day or Night</small>
+                        <p>
+                            {% if weather_data.current.is_day %}
+                                Daytime
+                            {% else %}
+                                Nighttime
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="weather-detail">
+                        <small>Observation Time (Local)</small>
+                        <p>{{ weather_data.current.time }}</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="text-center mt-4">
+        <small class="text-secondary">
+            Weather information is provided by OpenWeatherMap.
+            It is not an official disaster warning or emergency alert.
+        </small>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

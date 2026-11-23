@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Form | SafeHaven</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --dark: #211C1B;
+            --dark-soft: #302522;
+            --red: #C43D24;
+            --red-dark: #9F2F1D;
+            --orange: #F36B32;
+            --background: #F4F0EC;
+            --text: #302522;
+            --muted: #81736D;
+            --border: #E9DFD8;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            background: var(--dark);
+            padding: 15px 0;
+        }
+
+        .navbar-brand {
+            color: white !important;
+            font-size: 23px;
+            font-weight: 700;
+        }
+
+        .navbar-brand span {
+            color: var(--orange);
+        }
+
+        .nav-link-custom {
+            color: #D8CBC4;
+            text-decoration: none;
+            font-size: 14px;
+            margin-left: 20px;
+        }
+
+        .nav-link-custom:hover {
+            color: var(--orange);
+        }
+
+        .page-container {
+            max-width: 680px;
+            margin: 45px auto;
+        }
+
+        .form-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            box-shadow: 0 5px 20px rgba(33, 28, 27, 0.05);
+            overflow: hidden;
+        }
+
+        .form-header {
+            background: linear-gradient(120deg, var(--dark), var(--red-dark));
+            color: white;
+            padding: 25px 30px;
+        }
+
+        .form-header h3 {
+            font-weight: 700;
+            margin-bottom: 7px;
+        }
+
+        .form-header p {
+            color: #E8DCD5;
+            margin: 0;
+            font-size: 14px;
+        }
+
+        .form-body {
+            padding: 30px;
+        }
+
+        .form-label {
+            color: var(--dark-soft);
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .form-control,
+        .form-select,
+        input,
+        select,
+        textarea {
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            padding: 11px 12px;
+            width: 100%;
+            color: var(--text);
+            background-color: white;
+        }
+
+        .form-control:focus,
+        .form-select:focus,
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--orange);
+            box-shadow: 0 0 0 0.2rem rgba(243, 107, 50, 0.15);
+            outline: none;
+        }
+
+        .field-error {
+            color: var(--red);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .btn-save {
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 7px;
+            padding: 11px 20px;
+            font-weight: 600;
+        }
+
+        .btn-save:hover {
+            background: var(--red-dark);
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #EEE9E5;
+            color: var(--dark-soft);
+            border: none;
+            border-radius: 7px;
+            padding: 11px 20px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .btn-cancel:hover {
+            background: #DED5CE;
+            color: var(--dark);
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 576px) {
+            .page-container {
+                margin: 25px 15px;
+            }
+
+            .form-body {
+                padding: 22px;
+            }
+
+            .nav-link-custom {
+                margin-left: 10px;
+                font-size: 12px;
+            }
+
+            .navbar-brand {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+
+        <a href="{% url 'home' %}" class="navbar-brand">
+            Safe<span>Haven</span>
+        </a>
+
+        <div class="d-flex align-items-center">
+            <a href="{% url 'home' %}" class="nav-link-custom">
+                Home
+            </a>
+
+            <a href="{% url 'dashboard' %}" class="nav-link-custom">
+                Dashboard
+            </a>
+        </div>
+
+    </div>
+</nav>
+
+<div class="container page-container">
+
+    <div class="form-card">
+
+        <div class="form-header">
+            <h3>Resident Information</h3>
+            <p>Enter the resident's details in the fields below.</p>
+        </div>
+
+        <div class="form-body">
+
+            <form method="POST">
+                {% csrf_token %}
+
+                {% for field in form %}
+                <div class="mb-4">
+
+                    <label class="form-label" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <div class="form-text">
+                            {{ field.help_text }}
+                        </div>
+                    {% endif %}
+
+                    {% if field.errors %}
+                        <div class="field-error">
+                            {{ field.errors }}
+                        </div>
+                    {% endif %}
+
+                </div>
+                {% endfor %}
+
+                <div class="d-flex flex-wrap gap-2 mt-4">
+
+                    <button type="submit" class="btn-save">
+                        Save Resident
+                    </button>
+
+                    <a href="{% url 'resident_list' %}" class="btn-cancel">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+    <footer class="footer">
+        SafeHaven &copy; 2026 | Community Disaster Preparedness System
+    </footer>
+
+</div>
+
+</body>
+</html>

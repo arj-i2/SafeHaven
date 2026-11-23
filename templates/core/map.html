@@ -1,0 +1,356 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emergency Map | SafeHaven</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        body {
+            background: #F4F0EC;
+            color: #302522;
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            background: #211C1B;
+        }
+
+        .navbar-brand span {
+            color: #F36B32;
+        }
+
+        .nav-link-custom {
+            color: #F4F0EC;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+
+        .nav-link-custom:hover {
+            color: #F36B32;
+        }
+
+        .page-title {
+            color: #211C1B;
+            font-weight: 700;
+        }
+
+        .map-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 35px 20px;
+        }
+
+        .map-card {
+            background: white;
+            border: 1px solid #E9DFD8;
+            border-radius: 14px;
+            padding: 20px;
+        }
+
+        #emergencyMap {
+            height: 600px;
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid #E9DFD8;
+            z-index: 1;
+        }
+
+        .legend {
+            display: flex;
+            gap: 25px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+            color: #51433D;
+            font-size: 14px;
+        }
+
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .legend-dot {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .map-heading {
+            margin-bottom: 25px;
+        }
+
+        .btn-lava {
+            background: #C43D24;
+            color: white;
+            border: none;
+        }
+
+        .btn-lava:hover {
+            background: #9F2F1D;
+            color: white;
+        }
+
+        .map-info {
+            background: #F9F5F1;
+            border: 1px solid #E9DFD8;
+            border-radius: 9px;
+            padding: 15px;
+            margin-bottom: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .map-container {
+                padding: 25px 12px;
+            }
+
+            #emergencyMap {
+                height: 480px;
+            }
+
+            .map-card {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a href="{% url 'home' %}" class="navbar-brand fw-bold">
+            Safe<span>Haven</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNav">
+            <div class="navbar-nav ms-auto align-items-lg-center">
+                <a href="{% url 'home' %}" class="nav-link-custom py-2">Home</a>
+                <a href="{% url 'dashboard' %}" class="nav-link-custom py-2">Dashboard</a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="map-container">
+
+    <div class="map-heading d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h2 class="page-title mb-1">Emergency Map</h2>
+            <p class="text-secondary mb-0">
+                View reported disaster incidents and available evacuation centers.
+            </p>
+        </div>
+
+        <a href="{% url 'dashboard' %}" class="btn btn-lava px-4">
+            Back to Dashboard
+        </a>
+    </div>
+
+    <div class="map-card shadow-sm">
+
+        <div class="map-info">
+            <div class="legend mb-0">
+                <span>
+                    <span class="legend-dot" style="background: #C43D24;"></span>
+                    Disaster Incidents
+                </span>
+
+                <span>
+                    <span class="legend-dot" style="background: #198754;"></span>
+                    Evacuation Centers
+                </span>
+            </div>
+        </div>
+
+        <div id="emergencyMap"></div>
+
+        <p id="mapMessage" class="text-secondary text-center mt-3 mb-0"></p>
+
+    </div>
+</div>
+
+{{ incidents|json_script:"incident-data" }}
+{{ centers|json_script:"center-data" }}
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+
+    const incidents = JSON.parse(
+        document.getElementById('incident-data').textContent
+    );
+
+    const centers = JSON.parse(
+        document.getElementById('center-data').textContent
+    );
+
+    const mapMessage = document.getElementById('mapMessage');
+
+    // Initialize map centered on the Philippines
+    const map = L.map('emergencyMap').setView(
+        [12.8797, 121.7740],
+        6
+    );
+
+    // MapTiler API key
+    const maptilerKey = "{{ maptiler_api_key|escapejs }}";
+
+    // Load MapTiler street map
+    if (maptilerKey) {
+
+        const tileLayer = L.tileLayer(
+            `https://api.maptiler.com/maps/streets-v4/{z}/{x}/{y}.png?key=${maptilerKey}`,
+            {
+                tileSize: 512,
+                zoomOffset: -1,
+                minZoom: 1,
+                maxZoom: 20,
+                attribution:
+                    '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> ' +
+                    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+                crossOrigin: true
+            }
+        ).addTo(map);
+
+        tileLayer.on('tileerror', function () {
+            mapMessage.textContent =
+                'Unable to load map tiles. Please check your MapTiler API key and internet connection.';
+        });
+
+    } else {
+
+        mapMessage.textContent =
+            'MapTiler API key is missing. Please check your .env configuration.';
+
+    }
+
+    // Red icon for disaster incidents
+    const redIcon = L.divIcon({
+        className: '',
+        html: '<div style="background:#C43D24;width:17px;height:17px;border:2px solid white;border-radius:50%;box-shadow:0 1px 5px #555;"></div>',
+        iconSize: [17, 17],
+        iconAnchor: [8, 8]
+    });
+
+    // Green icon for evacuation centers
+    const greenIcon = L.divIcon({
+        className: '',
+        html: '<div style="background:#198754;width:17px;height:17px;border:2px solid white;border-radius:50%;box-shadow:0 1px 5px #555;"></div>',
+        iconSize: [17, 17],
+        iconAnchor: [8, 8]
+    });
+
+    // Create popup content
+    function createPopup(title, details) {
+
+        const container = document.createElement('div');
+
+        const heading = document.createElement('strong');
+        heading.textContent = title;
+
+        container.appendChild(heading);
+
+        details.forEach(detail => {
+
+            const paragraph = document.createElement('p');
+            paragraph.textContent = detail;
+            paragraph.style.margin = '5px 0 0';
+
+            container.appendChild(paragraph);
+
+        });
+
+        return container;
+    }
+
+    // Display disaster incident markers
+    incidents.forEach(incident => {
+
+        const latitude = Number(incident.latitude);
+        const longitude = Number(incident.longitude);
+
+        if (
+            !Number.isFinite(latitude) ||
+            !Number.isFinite(longitude) ||
+            latitude < -90 ||
+            latitude > 90 ||
+            longitude < -180 ||
+            longitude > 180
+        ) {
+            return;
+        }
+
+        const marker = L.marker(
+            [latitude, longitude],
+            { icon: redIcon }
+        ).addTo(map);
+
+        marker.bindPopup(
+            createPopup(incident.title, [
+                'Address: ' + incident.address,
+                'Status: ' + incident.status
+            ])
+        );
+
+    });
+
+    // Display evacuation center markers
+    centers.forEach(center => {
+
+        const latitude = Number(center.latitude);
+        const longitude = Number(center.longitude);
+
+        if (
+            !Number.isFinite(latitude) ||
+            !Number.isFinite(longitude) ||
+            latitude < -90 ||
+            latitude > 90 ||
+            longitude < -180 ||
+            longitude > 180
+        ) {
+            return;
+        }
+
+        const marker = L.marker(
+            [latitude, longitude],
+            { icon: greenIcon }
+        ).addTo(map);
+
+        marker.bindPopup(
+            createPopup(center.name, [
+                'Address: ' + center.address,
+                'Active: ' + (center.is_active ? 'Yes' : 'No')
+            ])
+        );
+
+    });
+
+    // Display message if no locations are available
+    if (incidents.length === 0 && centers.length === 0) {
+
+        mapMessage.textContent =
+            'No incidents or evacuation centers are available yet.';
+
+    }
+
+    // Correct map dimensions after initialization
+    setTimeout(function () {
+        map.invalidateSize();
+    }, 200);
+
+</script>
+
+</body>
+</html>
